@@ -5,6 +5,8 @@
 ###########
 #Libraries#
 ###########
+library(igraph)
+library(ggplot2)
 
 ###############
 #Acc functions#
@@ -54,7 +56,9 @@ wuhan_mob <- rep(NA, length(files_in))
 nanjing_mob <- rep(NA, length(files_in))
 shanghai_mob <- rep(NA, length(files_in))
 wu_sha <- rep(NA, length(files_in))
-
+centralities <- c()
+index <- c()
+county <- c()
 pb <- txtProgressBar(1, length(files_out), style=3)
 for(f in 1:length(files_out)){
   mob.in.f <- make_mob(files_in[f])
@@ -62,6 +66,10 @@ for(f in 1:length(files_out)){
   mob2 <- mob.in.f - t(mob.out.f)
   svs <- svd(mob2)
   svds[f] <- svs$d[1]
+  
+  centralities <- c(centralities, svs$u[1,])
+  index <- c(index, rep(f, length(svs$u[1,])))
+  county <- c(county, 1:length(svs$u[1,]))
   
   log_mobs <- log(mob2)
   log_mobs[which(is.finite(log_mobs) == FALSE)] <- NA
@@ -80,3 +88,8 @@ plot(dates, wuhan_mob, type = "l")
 plot(dates, nanjing_mob, type = "l")
 plot(dates, shanghai_mob, type = "l")
 plot(dates, wu_sha, type = "l", xlab = "2020", ylab = "Relative mobility", bty = "n", lwd = 3)
+
+dat.plot <- data.frame(county,index, centralities)
+
+use <- which(county == 42)
+ggplot(dat.plot[use,], aes(x = index, y = centralities)) + geom_line()
